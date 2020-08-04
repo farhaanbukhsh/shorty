@@ -20,7 +20,7 @@ func New(databaseName string) (Service, error) {
 	}
 	createTable := `CREATE TABLE IF NOT EXISTS 
 		shorty (uid INTEGER PRIMARY KEY AUTOINCREMENT, url VARCHAR(256) NOT NULL,
-		code VARCHAR(64) NOT NULL);
+		code VARCHAR(64) NOT NULL UNIQUE);
 	`
 
 	_, err = database.Exec(createTable)

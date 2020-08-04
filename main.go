@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	server "github.com/farhaanbukhsh/shorty/server"
+	"github.com/farhaanbukhsh/shorty/server"
 	"github.com/farhaanbukhsh/shorty/storage"
 )
 
