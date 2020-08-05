@@ -15,17 +15,9 @@ type URLRequest struct {
 	Slug    string `json:"slug"`
 }
 
-func registerURL(w http.ResponseWriter, request *http.Request) {
-	if request.Method == http.MethodPost {
-		var urlRequest URLRequest
-		err := json.NewDecoder(request.Body).Decode(&urlRequest)
-		if err != nil {
-			fmt.Printf("Error Occured While Processing Request")
-		}
-		fmt.Printf("%s", urlRequest)
-		defer request.Body.Close()
-
-	}
+type response struct {
+	Success bool   `json:"success"`
+	Code    string `json:"response"`
 }
 
 func registerHandler(svc storage.Service) http.HandlerFunc {
@@ -36,12 +28,16 @@ func registerHandler(svc storage.Service) http.HandlerFunc {
 			if err != nil {
 				fmt.Printf("Error Occured While Processing Request")
 			}
-			fmt.Printf("%s", urlRequest)
 			code, err := svc.Save(urlRequest.LongURL, urlRequest.Slug)
 			if err != nil {
 				panic(err)
 			}
-			fmt.Printf(code)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			err = json.NewEncoder(w).Encode(response{Code: code, Success: err == nil})
+			if err != nil {
+				log.Printf("could not encode response to output: %v", err)
+			}
 			defer request.Body.Close()
 
 		}

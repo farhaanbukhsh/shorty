@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	_ "github.com/mattn/go-sqlite3" // Loading Sqlite driver
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // SqliteConnetion responsible to connect to the database
@@ -34,9 +34,18 @@ func New(databaseName string) (Service, error) {
 // Save method helps to save the url and get back a short code
 func (conn sqliteConnetion) Save(url string, slug string) (string, error) {
 	var code string
+	var slugExists int
+	err := conn.Db.QueryRow("SELECT COUNT(*) FROM shorty where code=$1", slug).Scan(&slugExists)
+	if err != nil {
+		return "", fmt.Errorf("Slug exists check failed, %s", err)
+	}
 	statement, err := conn.Db.Prepare("INSERT INTO shorty (url, code) VALUES (?, ?)")
 	if err != nil {
 		return "", fmt.Errorf("Insert statement is wrong, %s", err)
+	}
+
+	if slugExists != 0 {
+		return "", fmt.Errorf("Slug Already Exists")
 	}
 
 	if slug != "" {
