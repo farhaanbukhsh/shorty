@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -16,27 +15,42 @@ type URLRequest struct {
 }
 
 type response struct {
-	Success bool   `json:"success"`
-	Code    string `json:"response"`
+	Success  bool   `json:"success"`
+	Response string `json:"response"`
+}
+
+func saveURL(req URLRequest, svc storage.Service) (response, int) {
+	responseCode := http.StatusOK
+	code, err := svc.Save(req.LongURL, req.Slug)
+	res := response{Response: code, Success: err == nil}
+	if err != nil {
+		responseCode = http.StatusConflict
+		if err.Error() == "Slug Already Exists" {
+			res = response{Response: err.Error(), Success: false}
+		}
+	}
+	return res, responseCode
 }
 
 func registerHandler(svc storage.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, request *http.Request) {
 		if request.Method == http.MethodPost {
 			var urlRequest URLRequest
+			var res response
+			responseCode := http.StatusOK
+			w.Header().Set("Content-Type", "application/json")
 			err := json.NewDecoder(request.Body).Decode(&urlRequest)
 			if err != nil {
-				fmt.Printf("Error Occured While Processing Request")
+				res = response{Response: "Bad Request", Success: false}
+				responseCode = http.StatusBadRequest
+			} else {
+				res, responseCode = saveURL(urlRequest, svc)
 			}
-			code, err := svc.Save(urlRequest.LongURL, urlRequest.Slug)
+
+			w.WriteHeader(responseCode)
+			err = json.NewEncoder(w).Encode(res)
 			if err != nil {
-				panic(err)
-			}
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			err = json.NewEncoder(w).Encode(response{Code: code, Success: err == nil})
-			if err != nil {
-				log.Printf("could not encode response to output: %v", err)
+				log.Fatalf("Could not encode response to output: %v", err)
 			}
 			defer request.Body.Close()
 
