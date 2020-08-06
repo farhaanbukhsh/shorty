@@ -21,6 +21,11 @@ type response struct {
 
 func saveURL(req URLRequest, svc storage.Service) (response, int) {
 	responseCode := http.StatusOK
+	if req.LongURL == "" {
+		res := response{Response: "Empty URL", Success: false}
+		responseCode = http.StatusBadRequest
+		return res, responseCode
+	}
 	code, err := svc.Save(req.LongURL, req.Slug)
 	res := response{Response: code, Success: err == nil}
 	if err != nil {

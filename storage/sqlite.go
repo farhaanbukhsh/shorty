@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/farhaanbukhsh/shorty/encoder"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -35,10 +36,12 @@ func New(databaseName string) (Service, error) {
 func (conn sqliteConnetion) Save(url string, slug string) (string, error) {
 	var code string
 	var slugExists int
+
 	err := conn.Db.QueryRow("SELECT COUNT(*) FROM shorty where code=$1", slug).Scan(&slugExists)
 	if err != nil {
 		return "", fmt.Errorf("Slug exists check failed, %s", err)
 	}
+
 	statement, err := conn.Db.Prepare("INSERT INTO shorty (url, code) VALUES (?, ?)")
 	if err != nil {
 		return "", fmt.Errorf("Insert statement is wrong, %s", err)
@@ -49,11 +52,17 @@ func (conn sqliteConnetion) Save(url string, slug string) (string, error) {
 	}
 
 	if slug != "" {
-		statement.Exec(url, slug)
 		code = slug
 	} else {
-		code = "bleh"
-		statement.Exec(url, code)
+		code, err = generateURLCode(conn)
+		if err != nil {
+			return "", fmt.Errorf("Cannot generate code")
+		}
+	}
+
+	_, err = statement.Exec(url, code)
+	if err != nil {
+		return "", fmt.Errorf("Cannot add code to the database")
 	}
 	return code, nil
 }
@@ -73,4 +82,14 @@ func (conn sqliteConnetion) Close() error {
 		return fmt.Errorf("Cannot close connection, %s", err)
 	}
 	return nil
+}
+
+func generateURLCode(conn sqliteConnetion) (string, error) {
+	var rows int
+	err := conn.Db.QueryRow("SELECT COUNT(*) FROM shorty").Scan(&rows)
+	if err != nil {
+		return "", fmt.Errorf("Row query didn't execute")
+	}
+	code := encoder.URLCodeGenerator(rows)
+	return code, nil
 }
