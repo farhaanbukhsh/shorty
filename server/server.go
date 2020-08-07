@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/farhaanbukhsh/shorty/storage"
 )
@@ -66,7 +67,7 @@ func registerHandler(svc storage.Service) http.HandlerFunc {
 
 func redirectHandler(svc storage.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, request *http.Request) {
-		code := request.URL.Path[1:]
+		code := strings.ToLower(request.URL.Path[1:])
 		url, err := svc.Load(code)
 		fmt.Printf("%s, %s", url, err)
 		if err != nil {
