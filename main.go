@@ -13,4 +13,5 @@ func main() {
 		log.Fatalf("Cannot connect to database, %s", err)
 	}
 	server.StartServer(":8080", svc)
+	defer svc.Close()
 }

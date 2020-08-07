@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/farhaanbukhsh/shorty/encoder"
+	helper "github.com/farhaanbukhsh/shorty/helpers"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -37,6 +38,8 @@ func (conn sqliteConnetion) Save(url string, slug string) (string, error) {
 	var code string
 	var slugExists int
 
+	sanitizeURL := helper.URLSanitizer(url)
+
 	err := conn.Db.QueryRow("SELECT COUNT(*) FROM shorty where code=$1", slug).Scan(&slugExists)
 	if err != nil {
 		return "", fmt.Errorf("Slug exists check failed, %s", err)
@@ -60,7 +63,7 @@ func (conn sqliteConnetion) Save(url string, slug string) (string, error) {
 		}
 	}
 
-	_, err = statement.Exec(url, code)
+	_, err = statement.Exec(sanitizeURL, code)
 	if err != nil {
 		return "", fmt.Errorf("Cannot add code to the database")
 	}

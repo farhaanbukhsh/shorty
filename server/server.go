@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -63,8 +64,30 @@ func registerHandler(svc storage.Service) http.HandlerFunc {
 	}
 }
 
+func redirectHandler(svc storage.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, request *http.Request) {
+		code := request.URL.Path[1:]
+		url, err := svc.Load(code)
+		fmt.Printf("%s, %s", url, err)
+		if err != nil {
+			fmt.Fprintf(w, "Error getting URL, %s", err)
+		} else {
+			http.Redirect(w, request, url, 307)
+		}
+	}
+}
+
+func faviconHandler(svc storage.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, request *http.Request) {
+		code := request.URL.Path[1:]
+		log.Printf("Favicon: %s", code)
+	}
+}
+
 // StartServer helps you run server
 func StartServer(port string, svc storage.Service) {
 	http.HandleFunc("/register", registerHandler(svc))
+	http.HandleFunc("/", redirectHandler(svc))
+	http.HandleFunc("/favicon.ico", faviconHandler(svc))
 	log.Fatal(http.ListenAndServe(port, nil))
 }
