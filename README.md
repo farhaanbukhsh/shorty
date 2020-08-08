@@ -1,6 +1,6 @@
 # Shorty
 
-![Go](https://github.com/farhaanbukhsh/shorty/workflows/Go/badge.svg?branch=master&event=pull_request)
+![Go](https://github.com/farhaanbukhsh/shorty/workflows/Go/badge.svg?branch=master)
 
 
 URL shortner for the masses. This is the most basic URL shortner written, which probably shouldn't be used in production but can be run for your small server at your `localhost`.
