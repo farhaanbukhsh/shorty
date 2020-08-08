@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/farhaanbukhsh/shorty/config"
 	"github.com/farhaanbukhsh/shorty/storage"
 )
 
@@ -39,7 +40,7 @@ func saveURL(req URLRequest, svc storage.Service) (response, int) {
 	return res, responseCode
 }
 
-func registerHandler(svc storage.Service) http.HandlerFunc {
+func registerHandler(cfg config.Config, svc storage.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, request *http.Request) {
 		if request.Method == http.MethodPost {
 			var urlRequest URLRequest
@@ -52,6 +53,7 @@ func registerHandler(svc storage.Service) http.HandlerFunc {
 				responseCode = http.StatusBadRequest
 			} else {
 				res, responseCode = saveURL(urlRequest, svc)
+				res.Response = cfg.Hostname + res.Response
 			}
 
 			w.WriteHeader(responseCode)
@@ -86,9 +88,9 @@ func faviconHandler(svc storage.Service) http.HandlerFunc {
 }
 
 // StartServer helps you run server
-func StartServer(port string, svc storage.Service) {
-	http.HandleFunc("/register", registerHandler(svc))
+func StartServer(cfg config.Config, svc storage.Service) {
+	http.HandleFunc("/register", registerHandler(cfg, svc))
 	http.HandleFunc("/", redirectHandler(svc))
 	http.HandleFunc("/favicon.ico", faviconHandler(svc))
-	log.Fatal(http.ListenAndServe(port, nil))
+	log.Fatal(http.ListenAndServe(cfg.Port, nil))
 }

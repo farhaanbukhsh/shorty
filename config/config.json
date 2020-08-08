@@ -1,0 +1,5 @@
+{
+    "hostname": "http://localhost:8080/",
+    "database": "shorty.db",
+    "port": ":8080"
+}
